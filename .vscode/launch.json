@@ -1,0 +1,11 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C#: HmsBlazor [Default Configuration]",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/code/final/HmsBlazor/HmsBlazor/HmsBlazor.csproj"
+        }
+    ]
+}
