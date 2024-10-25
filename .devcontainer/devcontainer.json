@@ -17,29 +17,14 @@
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [5000, 5223, 8081, 18888],
-	// "portsAttributes": {
-	// 	"18888": {
-	// 		"label": "Aspire Dashboard",
-	// 		"onAutoForward": "notify",
-	// 		"protocol": "http"
-	// 	},
-	// 	"5000": {
-	// 		"label": "Image API",
-	// 		"onAutoForward": "notify",
-	// 		"protocol": "http"
-	// 	},
-	// 	"5223": {
-	// 		"label": "Frontend",
-	// 		"onAutoForward": "notify",
-	// 		"protocol": "http"
-	// 	},
-	// 	"8081": {
-	// 		"label": "k3d",
-	// 		"onAutoForward": "notify",
-	// 		"protocol": "http"
-	// 	}
-	// },
+	"forwardPorts": [7219],
+	"portsAttributes": {
+		"7219": {
+			"label": "Blazor App",
+			"onAutoForward": "openBrowser",
+			"protocol": "https"
+		}
+	},
 
 	// Use 'postCreateCommand' to run commands after the container is created.	
 	"onCreateCommand": "bash ./.devcontainer/on-create.sh",
@@ -54,10 +39,7 @@
                 "ms-dotnettools.csharp",
 				"ms-azuretools.vscode-docker",
 				"github.copilot",
-				"ms-kubernetes-tools.vscode-kubernetes-tools",
-				"ms-azuretools.vscode-bicep",
-				"ms-dotnettools.csdevkit",
-				"4ops.terraform"
+				"ms-dotnettools.csdevkit"
 			]
 		}
 	}
