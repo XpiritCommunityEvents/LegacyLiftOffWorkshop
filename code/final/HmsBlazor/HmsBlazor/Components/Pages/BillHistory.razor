@@ -1,0 +1,234 @@
+@page "/bill-history"
+@inject Project_HMS.DataAccess Da
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+@using System.Data
+
+<PageTitle>Bill History</PageTitle>
+
+<h3>Bill History</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnCalculate_Click" class="btn btn-success">Calculate</button>
+    <button @onclick="btnPrint_Click" class="btn btn-secondary">Print</button>
+    <button @onclick="btnUpdate_Click" class="btn btn-success">Update</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Bill Id:</label>
+        <input @bind="txtBId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Room Id:</label>
+        <input @bind="txtRId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone No:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check In:</label>
+        <input @bind="dtpCheckIn" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check Out:</label>
+        <input @bind="dtpCheckOut" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Total:</label>
+        <input @bind="txtTotal" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Advance:</label>
+        <input @bind="txtAdvance" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Remaining:</label>
+        <input @bind="txtRemaining" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Now Paid Amount:</label>
+        <input @bind="txtNPaid" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Returned Amount:</label>
+        <input @bind="txtReturn" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>BId</th>
+                <th>RId</th>
+                <th>CName</th>
+                <th>CPhone</th>
+                <th>CheckIn</th>
+                <th>CheckOut</th>
+                <th>Advance</th>
+                <th>Remaining</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in bookings)
+            {
+                <tr @ondblclick="() => dgvBooking_DoubleClick(booking)">
+                    <td>@booking.BId</td>
+                    <td>@booking.RId</td>
+                    <td>@booking.CName</td>
+                    <td>@booking.CPhone</td>
+                    <td>@booking.CheckIn</td>
+                    <td>@booking.CheckOut</td>
+                    <td>@booking.Advance</td>
+                    <td>@booking.Remaining</td>
+                    <td>@booking.Total</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Booking> bookings = new List<Booking>();
+    private string txtBId, txtRId, txtCName, txtPhone,  txtTotal, txtAdvance, txtRemaining, txtNPaid, txtReturn;
+    private string dtpCheckIn, dtpCheckOut;
+    protected override void OnInitialized()
+    {
+        PopulateGridView();
+    }
+
+    private void PopulateGridView()
+    {
+        try
+        {
+            string sql = "select * from Booking;";
+            DataSet ds1 = Da.ExecuteQuery(sql);
+            bookings = ds1.Tables[0].AsEnumerable().Select(dataRow => new Booking
+                {
+                    BId = dataRow.Field<int>("BId"),
+                    RId = dataRow.Field<int>("RId"),
+                    CName = dataRow.Field<string>("CName"),
+                    CPhone = dataRow.Field<string>("CPhone"),
+                    CheckIn = dataRow.Field<DateTime>("CheckIn").ToString("yyyy-MM-dd"),
+                    CheckOut = dataRow.Field<DateTime>("CheckOut").ToString("yyyy-MM-dd"),
+                    Advance = dataRow.Field<double>("Advance"),
+                    Remaining = dataRow.Field<double>("Remaining"),
+                    Total = dataRow.Field<double>("Total")
+                }).ToList();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvBooking_DoubleClick(Booking booking)
+    {
+        txtBId = booking.BId.ToString();
+        txtRId = booking.RId.ToString();
+        txtCName = booking.CName;
+        txtPhone = booking.CPhone;
+        dtpCheckIn = booking.CheckIn;
+        dtpCheckOut = booking.CheckOut;
+        txtAdvance = booking.Advance.ToString();
+        txtRemaining = booking.Remaining.ToString();
+        txtTotal = booking.Total.ToString();
+    }
+
+    private void btnCalculate_Click()
+    {
+        try
+        {
+            double rv = 0;
+            var R = Convert.ToDouble(txtRemaining);
+            var N = Convert.ToDouble(txtNPaid);
+            rv = N - R;
+            txtReturn = rv.ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnPrint_Click()
+    {
+        // Implement print logic here
+    }
+
+    private void btnUpdate_Click()
+    {
+        try
+        {
+            string update = $"UPDATE Room SET IsBooked = 'No' WHERE RId = {txtRId}";
+            int count1 = Da.ExecuteDML(update);
+            if (count1 == 1)
+            {
+                Console.WriteLine("Data Updated In Room Table Successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Data Upgradation Failed In Room Table.");
+            }
+
+            string update1 = $"UPDATE Booking SET Advance = {txtTotal}, Remaining = 0 WHERE BId = {txtBId}";
+            int count2 = Da.ExecuteDML(update1);
+            if (count2 == 1)
+            {
+                Console.WriteLine("Data Updated In Booking Table Successfully.");
+                PopulateGridView();
+            }
+            else
+            {
+                Console.WriteLine("Data Upgradation Failed In Booking Table.");
+            }
+            ClearContent();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtBId = "";
+        txtRId = "";
+        dtpCheckIn = "";
+        txtCName = "";
+        txtPhone = "";
+        txtTotal = "";
+        txtAdvance = "";
+        txtRemaining = "";
+        txtNPaid = "";
+        txtReturn = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class Booking
+    {
+        public int BId { get; set; }
+        public int RId { get; set; }
+        public string CName { get; set; }
+        public string CPhone { get; set; }
+        public string CheckIn { get; set; }
+        public string CheckOut { get; set; }
+        public double Advance { get; set; }
+        public double Remaining { get; set; }
+        public double Total { get; set; }
+    }
+}

@@ -1,0 +1,147 @@
+@page "/customer-details"
+@using System.Data
+@inject NavigationManager Navigation
+@inject Project_HMS.DataAccess Da
+
+<PageTitle>Customer Details</PageTitle>
+
+<h3>Customer Details</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnUpdate_Click" class="btn btn-success">Update</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone No:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Address:</label>
+        <input @bind="txtAdd" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>NID:</label>
+        <input @bind="txtNID" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>CName</th>
+                <th>CPhone</th>
+                <th>CAdd</th>
+                <th>CNID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customers)
+            {
+                <tr @ondblclick="() => dgvCustomer_DoubleClick(customer)">
+                    <td>@customer.CName</td>
+                    <td>@customer.CPhone</td>
+                    <td>@customer.CAdd</td>
+                    <td>@customer.CNID</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Customer> customers = new List<Customer>();
+    private string txtCName, txtPhone, txtAdd, txtNID;
+
+    protected override void OnInitialized()
+    {
+        PopulateGridView();
+    }
+
+    private void PopulateGridView()
+    {
+        try
+        {
+            string sql = "select * from Booking;";
+            DataSet ds1 = Da.ExecuteQuery(sql);
+            customers = ds1.Tables[0].AsEnumerable().Select(dataRow => new Customer
+                {
+                    CName = dataRow.Field<string>("CName"),
+                    CPhone = dataRow.Field<string>("CPhone"),
+                    CAdd = dataRow.Field<string>("CAdd"),
+                    CNID = dataRow.Field<string>("CNID")
+                }).ToList();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvCustomer_DoubleClick(Customer customer)
+    {
+        txtCName = customer.CName;
+        txtPhone = customer.CPhone;
+        txtAdd = customer.CAdd;
+        txtNID = customer.CNID;
+    }
+
+    private void btnUpdate_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtCName) || string.IsNullOrEmpty(txtAdd) || string.IsNullOrEmpty(txtNID) || string.IsNullOrEmpty(txtPhone))
+            {
+                Console.WriteLine("To Update please fill all the information.");
+                return;
+            }
+
+            string query = $"update Booking set CName = '{txtCName}', CPhone = '{txtPhone}', CAdd = '{txtAdd}', CNID = '{txtNID}' where CNID = {txtNID};";
+            int count = Da.ExecuteDML(query);
+            if (count == 1)
+            {
+                Console.WriteLine("Customer Info Updated Successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Customer Upgradation Failed.");
+            }
+            PopulateGridView();
+            ClearContent();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtCName = "";
+        txtPhone = "";
+        txtAdd = "";
+        txtNID = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class Customer
+    {
+        public string CName { get; set; }
+        public string CPhone { get; set; }
+        public string CAdd { get; set; }
+        public string CNID { get; set; }
+    }
+}
+```

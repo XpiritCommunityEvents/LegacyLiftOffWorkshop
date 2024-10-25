@@ -8,6 +8,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddScoped<Project_HMS.DataAccess>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
