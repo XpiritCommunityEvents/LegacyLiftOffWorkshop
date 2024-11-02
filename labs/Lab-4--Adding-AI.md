@@ -3,6 +3,53 @@ In this lab, you are going to add a very usefull capability to the application t
 
 By now you have seen how we can use LLM's to help us converting existing software into new modern software that can even run in the cloud. But with the same models we can also augement our applications and make them more "smart"
 
+## Adding Clipboard Support
+Since we want to paste the text that is on the clipboard we need to add clipboard support to the application.
+To make a button that can pick up the text from the clipboard take the following steps:
+
+1. In your Blazor app, add the `CurrieTechnologies.Razor.Clipboard` [NuGet package](https://www.nuget.org/packages/CurrieTechnologies.Razor.Clipboard/)
+
+   ```sh
+   Install-Package CurrieTechnologies.Razor.Clipboard
+   ```
+
+2. In your Blazor app's `Startup.cs`, register the 'ClipboardService'.
+
+   ```cs
+   public static void Main(string[] args)
+   {
+       ...
+       builder.Services.AddClipboard();
+       ...
+   }
+   ```
+
+3. Add this script tag in your root razor file App.razor, right under the framework script tag. (i.e `<script src="_framework/blazor.server.js"></script>` for Blazor Server Apps or `<script src="_framework/blazor.webassembly.js"></script>` for Blazor WebAssembly Apps).
+We need to register this javascript, because that is the only way we can interact with the browser and get access to the clipboard.
+
+   ```html
+   <script src="_content/CurrieTechnologies.Razor.Clipboard/clipboard.min.js"></script>
+   ```
+
+4. You can now inject the ClipboardService into any Blazor page. We will do this for the Reservation.razor page, where we want to create our magic paste button.:
+
+   ```razor
+   @using CurrieTechnologies.Razor.Clipboard
+   @inject ClipboardService clipboard
+
+   <button @onclick="btnPasteOnclick">Paste From Clipboard</button>
+
+    ....
+    @code{
+    private string clipboardText;
+
+        private async Task btnPasteOnclick()
+        {
+            clipboardText = await clipboard.ReadTextAsync();
+        }
+    }
+   ```
+
 ## Adding AI Capabilities by hand
 We are going to make a change to the AddResevration screen and we are going to add a smart paste capability to the form. This smart paste capability makes it possible to copy an email from a customer and simply paste the email in the form, resulting in all fields to be fileld with the correct values, so we can very simply input the data. This is helpefull for our users, since they don't have to parse the email themselves translatign it into a real booking, in the booking system we have.
 
@@ -14,7 +61,8 @@ With Semantic Kernel we are going to parse an email text, provide a system promp
 
 ## Providing the prompt
 We are going to use the following system prompt:
-``` text
+``` c#
+string prompt = """
 You are an AI assitant that takes customer emails and converts them to a json structure that contains the datapoints you find in the email. The json structure looks as follows:
 {
     "checkInDate": "Check in Date in dd-MM-yyyy format",
@@ -28,8 +76,10 @@ You are an AI assitant that takes customer emails and converts them to a json st
     "AdvancePayment": "Advanced payment made at time of booking in USD",
     "Remaining": "Remaining payment to be done at checkin in USD"
 }
+"""
 ```
 The user prompt will contain an email conversation that we can get from the clipboard, when we click a button that we call smart paste. 
+
 
 ## Creating plugins to solve parts of the data
 In order to select the correct food package, we need to first query the database what food packages are available and then have the LLM decide which food package fits best for this customer request. To create such a function you can create a C# function that will be called by Semantic kernel automaticaly.
