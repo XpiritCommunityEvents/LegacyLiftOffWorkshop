@@ -1,6 +1,9 @@
 <!-- Login.razor -->
 @page "/Login"
 @rendermode InteractiveServer
+
+@attribute [Authorize]
+
 <div class="login-container">
     <div class="login-box">
         <h3 class="login-title">Login Info</h3>

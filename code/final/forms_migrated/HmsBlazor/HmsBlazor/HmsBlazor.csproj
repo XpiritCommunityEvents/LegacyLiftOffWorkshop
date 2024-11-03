@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <ProjectReference Include="..\HmsBlazor.Client\HmsBlazor.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.3.1" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="3.3.1" />
   </ItemGroup>
 
 </Project>

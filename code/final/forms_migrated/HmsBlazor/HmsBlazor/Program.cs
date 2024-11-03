@@ -1,14 +1,29 @@
-using HmsBlazor.Client.Pages;
 using HmsBlazor.Components;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
+    .AddMicrosoftIdentityConsentHandler()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddScoped<Project_HMS.DataAccess>();
+
+builder.Services
+    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("EntraID"));
+
+builder.Services.AddControllersWithViews()
+                .AddMicrosoftIdentityUI();
+                
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = options.DefaultPolicy;
+});
 
 var app = builder.Build();
 
@@ -29,9 +44,14 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+app.UseAuthentication(); // <-- add this
+app.UseAuthorization(); // <-- add this
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(HmsBlazor.Client._Imports).Assembly);
+
+app.MapControllers();
 
 app.Run();

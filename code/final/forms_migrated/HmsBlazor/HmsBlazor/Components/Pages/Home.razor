@@ -1,6 +1,8 @@
 ﻿<!-- ManagerDashboard.razor -->
 @page "/"
 @rendermode InteractiveServer
+@attribute [Authorize]
+
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h2>Manager Dashboard</h2>

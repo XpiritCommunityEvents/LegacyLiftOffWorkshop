@@ -1,8 +1,11 @@
 @page "/add-room"
 @using System.Data
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Navigation
 @inject Project_HMS.DataAccess DataAccess
 @rendermode InteractiveServer
+
+@attribute [Authorize(Roles="Role.Owner")]
 
 <PageTitle>Add Room</PageTitle>
 
