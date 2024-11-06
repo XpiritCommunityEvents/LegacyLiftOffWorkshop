@@ -1,5 +1,6 @@
 using HmsBlazor.Components;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 
@@ -13,8 +14,15 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<Project_HMS.DataAccess>();
 
-builder.Services
-    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+var hmsApiUrl = builder.Configuration["HmsApi:Url"];
+builder.Services.AddHttpClient("HmsApi", (sp, client) =>{
+    client.BaseAddress = new Uri(hmsApiUrl);
+});
+
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>()
+    .CreateClient("HmsApi"));
+
+builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("EntraID"));
 
 builder.Services.AddControllersWithViews()
@@ -43,6 +51,16 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+// Add ForwardedHeaders middleware
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+};
+forwardedHeadersOptions.KnownNetworks.Clear(); // Loopback by default, this clears it
+forwardedHeadersOptions.KnownProxies.Clear(); // Loopback by default, this clears it
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseAuthentication(); // <-- add this
 app.UseAuthorization(); // <-- add this

@@ -1,0 +1,61 @@
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveWebAssembly
+
+@attribute [Authorize]
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>Manager Dashboard</h2>
+    </div>
+    <div class="dashboard-buttons">
+        <button @onclick="NavigateToAddRoom" class="btn btn-primary">Add Room</button>
+        <button @onclick="NavigateToReservation" class="btn btn-primary">Reservation</button>
+        <button @onclick="NavigateToCustomerDetails" class="btn btn-primary">Customer Details</button>
+        <button @onclick="NavigateToFoodMenu" class="btn btn-primary">Food Menu</button>
+        <button @onclick="NavigateToExtraService" class="btn btn-primary">Extra Service</button>
+        <button @onclick="NavigateToBillHistory" class="btn btn-primary">Bill History</button>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private HttpClient Http { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await Http.GetAsync("/api/my");
+        
+        await base.OnInitializedAsync();
+    }
+
+    private void NavigateToAddRoom()
+    {
+        NavigationManager.NavigateTo("/add-room");
+    }
+
+    private void NavigateToReservation()
+    {
+        NavigationManager.NavigateTo("/reservation");
+    }
+
+    private void NavigateToCustomerDetails()
+    {
+        NavigationManager.NavigateTo("/customer-details");
+    }
+
+    private void NavigateToFoodMenu()
+    {
+        NavigationManager.NavigateTo("/food-menu");
+    }
+
+    private void NavigateToExtraService()
+    {
+        NavigationManager.NavigateTo("/extra-service");
+    }
+
+    private void NavigateToBillHistory()
+    {
+        NavigationManager.NavigateTo("/bill-history");
+    }
+}
