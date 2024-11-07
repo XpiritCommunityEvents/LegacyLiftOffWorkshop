@@ -1,0 +1,83 @@
+name: Register Participant Codespace
+
+on:
+  issues:
+    types:
+      - closed
+
+  workflow_dispatch:
+    inputs: 
+      githubhandle: 
+        required: true
+        type: text 
+      codespace:
+        required: true
+        type: text 
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest  
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Get issue creator
+      id: github_handle
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          if ("${{ github.event_name }}" == "issues") {
+            const subject = context.payload.issue;
+            if (subject.labels.find(l => l.name == "provisioning")) {
+              creator = subject.user.login;
+              console.log(`Issue creator: ${creator}`);
+              return creator;
+            }
+            throw new Error("Issue did not have a provisioning label");
+          }
+          return "${{ github.event.inputs.githubhandle }}";
+
+    - name: Check if user is attendee
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Get user id who triggered this workflow
+        
+        role=$(gh api repos/XpiritCommunityEvents/LegacyLiftOffWorkshop/collaborators/${{steps.github_handle.outputs.result}}/permission | jq '.role_name' -r)
+        echo "User has role $role"
+        if [[ "$role" != "Attendee" && "$role" != "admin" ]]; then
+            echo "User is not an attendee or admin. Stopping the workflow."
+            exit 1
+        fi
+
+    - name: Get codespace name from issue title
+      id: codespace_name
+      if: success()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          if ("${{ github.event_name }}" == "issues") {
+            const subject = context.payload.issue;
+            if (subject.labels.find(l => l.name == "provisioning")) {
+              codespace = subject.title;
+              console.log(`Codespace name: ${codespace}`);
+              return codespace;
+            }
+            throw new Error("Issue did not have a provisioning label");
+          }
+          return "${{ github.event.inputs.codespace }}";
+
+    - name: Azure Login
+      uses: azure/login@v2.2.0
+      if: success()
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
+    - name: Register codespace as reply url in app registration
+      if: success()
+      shell: pwsh
+      run: |
+        ./provisioning/add-codespace-to-app.ps1 -Codespace ${{ steps.codespace_name.outputs.result }} -AzureCredentialsJson '${{ secrets.AZURE_CREDENTIALS }}'
