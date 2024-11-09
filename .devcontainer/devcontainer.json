@@ -37,7 +37,8 @@
                 "ms-dotnettools.csharp",
 				"ms-azuretools.vscode-docker",
 				"github.copilot",
-				"ms-dotnettools.csdevkit"
+				"ms-dotnettools.csdevkit",
+				"ms-mssql.mssql"
 			]
 		}
 	}
