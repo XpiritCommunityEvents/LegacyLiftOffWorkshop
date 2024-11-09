@@ -1,4 +1,9 @@
 name: Deploy HMSBlazor
+permissions:
+   id-token: write
+   contents: write
+   packages: write
+
 env:
   location: 'East US 2'
   slotname: staging
@@ -7,15 +12,81 @@ on:
      types: [published]
 
   workflow_dispatch:
-     
+    inputs: 
+        release_id: 
+          required: true
+          type: text 
+       
 jobs:
-    build:
-        runs-on: ubuntu-latest  
-        steps:
-          - name: Determine release ID
-            id: release_id
-            uses: actions/github-script@v7
-            with:
-                github-token: ${{ secrets.GITHUB_TOKEN }}
-                script: |
-                  console.log('${{ github.event.release.id }}');
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: 'staging'
+    #  url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    #outputs:
+      #homepage: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+
+    - name: Azure CLI Login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Fetch release artifacts
+      if: ${{ github.event_name == 'release' }}
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        version: ${{ github.event.release.id }}
+        regex: true
+        file: ".*"
+        target: './'
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Fetch release artifacts
+      if: ${{ github.event_name != 'release' }}
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        version: ${{ github.event.inputs.release_id }}
+        regex: true
+        file: ".*"
+        target: './'
+        token: ${{ secrets.GITHUB_TOKEN }}
+  
+    - name: Determine ID of Database Admins group
+      id: database_admins
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          adminGroupId=$(az ad group show --group "Database Admins" --query "id" --output tsv)
+          echo "::set-output name=adminGroupId::$adminGroupId"
+
+    - name: Deploy Bicep infrastructure
+      uses: azure/arm-deploy@v2
+      with:
+        subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        resourceGroupName: ${{ secrets.AZURE_RG }}
+        template: ${{ github.workspace }}/deployment/project_hms.bicep
+        parameters: 'tenantId="${{ secrets.AZURE_TENANT_ID }}" location="${{ env.location }}" adminGroupPrincipalId="${{ steps.database_admins.outputs.adminGroupId }}" databasePassword="${{ secrets.DATABASE_PASSWORD }}"'
+        failOnStdErr: false
+        scope: subscription
+        region: '${{ env.location }}'
+
+    - name: Deploy app to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'app-hms-cloud'
+        package: ./hms_blazor.zip
+
+    - name: Seed database
+      uses: azure/powershell@v2
+      with:
+        inlineScript: ./deployment/seed_database.ps1 -subscriptionId ${{ secrets.AZURE_SUBSCRIPTION_ID }} -databasePassword ${{ secrets.DATABASE_PASSWORD }}
+        azPSVersion: "latest"
