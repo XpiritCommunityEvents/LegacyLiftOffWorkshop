@@ -43,6 +43,7 @@ jobs:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
 
     - name: Create Repository
+      if: success()
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
       run: |
@@ -58,6 +59,7 @@ jobs:
         fi
           
     - name: Invite Member to Organization
+      if: success()
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
       run: |
@@ -66,35 +68,10 @@ jobs:
         gh api --method PUT -H "Accept: application/vnd.github+json" /repos/XpiritCommunityEvents/LegacyLiftOffWorkshop/collaborators/${{ steps.github_handle.outputs.result }} -f permission='Attendee'
 
     - name: Set Rights to Repo
+      if: success()
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
       run: |
         # Add user to newly cloned repo
         gh repo-collab add XpiritCommunityEvents/attendeello-${{ steps.github_handle.outputs.result }} ${{ steps.github_handle.outputs.result }} --permission admin | cat
     
-    - name: Azure Login
-      uses: azure/login@v2.2.0
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    # - name: Create Azure resource
-    #   uses: Azure/cli@v1.0.8
-    #   with:
-    #     inlineScript: |
-    #       # Set variables
-    #       RESOURCE_GROUP_NAME=rg-${{ steps.github_handle.outputs.result }}
-    #       APP_SERVICE_PLAN_NAME=asp-${{ steps.github_handle.outputs.result }}
-    #       WEBAPP_HMS="app-${{ steps.github_handle.outputs.result }}-hms"
-          
-    #       az group create -l eastus -n $RESOURCE_GROUP_NAME --tags vslive=2024
-
-    #       # Create an App Service Plan
-    #       az appservice plan create --name $APP_SERVICE_PLAN_NAME --resource-group $RESOURCE_GROUP_NAME --sku S1 --tags vslive=2024
-        
-    #       # Create Web Apps
-    #       az webapp create --name $WEBAPP_HMS --resource-group $RESOURCE_GROUP_NAME --plan $APP_SERVICE_PLAN_NAME --tags vslive=2024
-
-    # - name: Run User Provisioning Script
-    #   shell: pwsh
-    #   run: |
-    #     ./provisioning/gh-aad.ps1 -githubHandle ${{ steps.github_handle.outputs.result }} -AzureCredentialsJson '${{ secrets.AZURE_CREDENTIALS }}' -InitialPassword "${{ secrets.INITIALPASSWORD }}" -runLocal $false
