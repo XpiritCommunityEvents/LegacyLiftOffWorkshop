@@ -13,7 +13,11 @@ on:
       codespace:
         required: true
         type: text 
-    
+
+concurrency:
+  group: only-one-at-a-time
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest  
