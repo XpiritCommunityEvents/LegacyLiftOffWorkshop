@@ -40,7 +40,7 @@ namespace Project_HMS
 
         public DataAccess()
         {
-            this.Sqlcon = new SqlConnection(@"Data Source=localhost;Initial Catalog=Project_HMS;Persist Security Info=True;User ID=sa;Password=myPassword123!@;TrustServerCertificate=True");
+            this.Sqlcon = new SqlConnection(@"Data Source=sql-hms-cloud.database.windows.net;Initial Catalog=sqldb-hms-cloud;Persist Security Info=True;User ID=hms_admin;Password=myPassword123!@;TrustServerCertificate=False");
             this.Sqlcon.Open();
         }
 
