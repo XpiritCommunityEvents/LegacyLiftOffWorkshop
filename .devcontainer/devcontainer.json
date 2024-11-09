@@ -20,8 +20,7 @@
 		"7219": {
 			"label": "Blazor App",
 			"onAutoForward": "openBrowser",
-			"protocol": "https",
-			"visibility": "public"
+			"protocol": "https"
 		}
 	},
 
