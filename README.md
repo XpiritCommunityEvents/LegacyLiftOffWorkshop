@@ -1,71 +1,21 @@
 # VSLHOL03 Hands-On Lab: Legacy Lift-off
+
 ## Bringing Your Legacy .NET Application into the Modern Cloud and AI Age
 
-## Agenda
+### Hotel Management System demo application
 
-### Introduction
+This application is intended to demonstrate how to modernize a legacy Windows Forms application into an ASP.NET Core Blazor application with the aid of Generative AI. It was written in Windows Forms in .NET Framework 4.8 as a classic Client/Server application. Here are some screenshot:
 
-Rebuild or refactor
-Intro HMS Forms application
-Set the goals for the day
+![login](./code/start/legacy/Project_HMS/SnapShots/Screenshot%20(2054).png)
 
-### HOL: Getting started
-- Setup codespace
-- Look at forms appliction source code
-- Start SQL Server container
+![rooms](./code/start/legacy/Project_HMS/SnapShots/Screenshot%20(2056).png)
 
-### Forms to Blazor using AI
+### Hands on labs
 
-- Make target project boilerplate blazor
-- OpenAI proxy, system prompt
-- Introduction and demo migration
-- Show Blazor scaffold and show one form
-- Migrate 2/3 forms
-- Get final solution
+In the hands on labs, we will bring this application into the modern age of AI and cloud by migrating and refactoring it. Meanwhile, we leverage the legacy code base as much as possible without doing a full rewrite of the application.
 
-### Were are we now
-API's vs. direct SQL
-Blazor hybrid
-Make API + AI explanation
+You will start with the code base in the [code/start/legacy folder](./code/start//legacy/) of this repo and work towards a more modern application. In case you get stuck, or want to continue from a certain point, you can refer to the sample solutions under [the code/final](./code/final) folder, which has a sample solution in several stages of completion.
 
-### HOL: Put API in between for 2 pages
+You can clone this repo and start working on the labs which can be found on the [Wiki pages of this repository](https://github.com/XpiritCommunityEvents/LegacyLiftOffWorkshop/wiki). We recommend that you keep a tab open with the Wiki at all times during the lab.
 
-Introduction: API design, which aspects are important
-Make WebApi project
-Implement controllers (using AI?)
-Refactor to make SQL statements async
-Some patterns to include in the refactor?
-
-### HOL: Copilot for unit testing
-
-### Secure coding
-SEcure coding + copilot
-SQL statements, owasp top 10, web vs forms,e tc.
-HOL: Advanced security scan, -> SQL Injection detection, Copliot in VSCode fixes maken
-
-### Cloud ready / cloud native
-Cloud ready vs loud native, deployment models
-API design, Logging/ Observability, Functions
-
-### HOL: Post event room booked, function processing, Function deployment
-
-Augmenting solution with AI
-Toepassen van AI in je applicatie, Form fill based on email
-
-### Security
-
-GHAS, what are the findings in our code?
-Fix SQL injection bugs
-
-### Hosting
-
-Hosting options in Azure
-Deploying to Azure
-
-### Infusing with AI
-
-Introduction Smart Components
-Apply Smart Components to Booking page, using a sample email
-
-### Wrap up
-No newline at end of file
+Have fun!
