@@ -63,12 +63,16 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
       run: |
-        id=$(gh api users/${{ steps.github_handle.outputs.result }} --jq '.id')
-        gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /orgs/XpiritCommunityEvents/invitations -F invitee_id=$id -f role='direct_member'
-        gh api --method PUT -H "Accept: application/vnd.github+json" /repos/XpiritCommunityEvents/LegacyLiftOffWorkshop/collaborators/${{ steps.github_handle.outputs.result }} -f permission='Attendee'
+        if gh api orgs/XpiritCommunityEvents/members/${{ steps.github_handle.outputs.result }} &>/dev/null; then
+          echo "User ${{ steps.github_handle.outputs.result }} is already a member of the organization."
+        else
+          id=$(gh api users/${{ steps.github_handle.outputs.result }} --jq '.id')
+          gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /orgs/XpiritCommunityEvents/invitations -F invitee_id=$id -f role='direct_member'
+          gh api --method PUT -H "Accept: application/vnd.github+json" /repos/XpiritCommunityEvents/LegacyLiftOffWorkshop/collaborators/${{ steps.github_handle.outputs.result }} -f permission='Attendee'
+        fi
 
     - name: Set Rights to Repo
-      if: success()
+      if: always()
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
       run: |
