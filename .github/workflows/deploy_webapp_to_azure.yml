@@ -1,0 +1,11 @@
+name: Deploy HMSBlazor
+env:
+  location: 'East US 2'
+  slotname: staging
+on:
+  release: 
+     types: [published]
+
+  workflow_dispatch:
+     
+jobs:
