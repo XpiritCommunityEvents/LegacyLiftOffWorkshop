@@ -1,0 +1,12 @@
+name: "Create and release web app"
+permissions:
+   actions: write
+   packages: write
+   contents: write
+
+on:
+  push:
+    branches: ["main"]
+
+  workflow_dispatch:
+
