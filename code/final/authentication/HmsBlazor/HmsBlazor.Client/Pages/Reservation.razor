@@ -1,0 +1,337 @@
+@page "/reservation"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+@attribute [Authorize]
+
+<PageTitle>Reservation</PageTitle>
+
+<h3>Reservation</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnConfirm_Click" class="btn btn-success">Confirm</button>
+    <button @onclick="btnTCalculate_Click" class="btn btn-primary">Calculate Total</button>
+    <button @onclick="btnRCalculate_Click" class="btn btn-primary">Calculate Remaining</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Booking Id:</label>
+        <input @bind="txtBId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Room Id:</label>
+        <input @bind="txtRId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check In:</label>
+        <input @bind="dtpCheckIn" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check Out:</label>
+        <input @bind="dtpCheckOut" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Days:</label>
+        <input @bind="txtDay" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Id:</label>
+        <input @bind="txtFId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Id:</label>
+        <input @bind="txtSId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Address:</label>
+        <input @bind="txtAdd" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>NID:</label>
+        <input @bind="txtNID" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Total:</label>
+        <input @bind="txtTotal" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Advance:</label>
+        <input @bind="txtAdv" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Remaining:</label>
+        <input @bind="txtRemaining" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Search:</label>
+        <input @bind="txtAutoSearch" @oninput="textBox1_TextChanged" />
+    </div>
+</div>
+
+<div>
+    <h4>Rooms</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>RId</th>
+                <th>Category</th>
+                <th>RoomCost</th>
+                <th>IsBooked</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var room in rooms)
+            {
+                <tr>
+                    <td>@room.RId</td>
+                    <td>@room.Category</td>
+                    <td>@room.RoomCost</td>
+                    <td>@room.IsBooked</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h4>Food Packages</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>FId</th>
+                <th>FName</th>
+                <th>FPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var food in foods)
+            {
+                <tr>
+                    <td>@food.FId</td>
+                    <td>@food.FName</td>
+                    <td>@food.FPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h4>Service Packages</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>SId</th>
+                <th>SName</th>
+                <th>SPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr>
+                    <td>@service.SId</td>
+                    <td>@service.SName</td>
+                    <td>@service.SPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Room> rooms = new List<Room>();
+    private List<FoodPackage> foods = new List<FoodPackage>();
+    private List<ServicePackage> services = new List<ServicePackage>();
+    private string txtBId, txtRId, dtpCheckIn, dtpCheckOut, txtDay, txtFId, txtSId, txtCName, txtAdd, txtPhone, txtNID, txtTotal, txtAdv, txtRemaining, txtAutoSearch;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+        await AutoIdGenerate();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            rooms = await Http.GetFromJsonAsync<List<Room>>("api/Room");
+            foods = await Http.GetFromJsonAsync<List<FoodPackage>>("api/FoodMenu");
+            services = await Http.GetFromJsonAsync<List<ServicePackage>>("api/ServicePackage");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task textBox1_TextChanged(ChangeEventArgs e)
+    {
+        try
+        {
+            rooms = await Http.GetFromJsonAsync<List<Room>>($"api/Room/search?category={txtAutoSearch}");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task AutoIdGenerate()
+    {
+        try
+        {
+            var bookings = await Http.GetFromJsonAsync<List<Booking>>("api/BillHistory/bookings");
+            var lastBooking = bookings.OrderByDescending(b => b.BId).FirstOrDefault();
+            txtBId = (lastBooking != null ? lastBooking.BId + 1 : 1).ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnConfirm_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtBId) || string.IsNullOrEmpty(txtRId) || string.IsNullOrEmpty(dtpCheckIn) ||
+                string.IsNullOrEmpty(dtpCheckOut) || string.IsNullOrEmpty(txtDay) || string.IsNullOrEmpty(txtFId) ||
+                string.IsNullOrEmpty(txtSId) || string.IsNullOrEmpty(txtCName) || string.IsNullOrEmpty(txtAdd) ||
+                string.IsNullOrEmpty(txtPhone) || string.IsNullOrEmpty(txtNID) || string.IsNullOrEmpty(txtTotal) ||
+                string.IsNullOrEmpty(txtAdv) || string.IsNullOrEmpty(txtRemaining))
+            {
+                Console.WriteLine("For reservation please fill all the information.");
+                return;
+            }
+
+            var booking = new Booking
+            {
+                BId = int.Parse(txtBId),
+                RId = int.Parse(txtRId),
+                CheckIn = dtpCheckIn,
+                CheckOut = dtpCheckOut,
+                FId = int.Parse(txtFId),
+                SId = int.Parse(txtSId),
+                CName = txtCName,
+                Address = txtAdd,
+                CPhone = txtPhone,
+                NID = txtNID,
+                Total = double.Parse(txtTotal),
+                Advance = double.Parse(txtAdv),
+                Remaining = double.Parse(txtRemaining)
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Reservation/confirm-reservation", booking);
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Reservation confirmed and room status updated.");
+                ClearContent();
+                await AutoIdGenerate();
+                await PopulateGridView();
+            }
+            else
+            {
+                Console.WriteLine("Data Insertion Failed In Booking Table.");
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnTCalculate_Click()
+    {
+        try
+        {
+            var request = new CalculationRequest
+            {
+                RId = int.Parse(txtRId),
+                FId = int.Parse(txtFId),
+                SId = int.Parse(txtSId),
+                Days = int.Parse(txtDay)
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Reservation/calculate-total", request);
+            if (response.IsSuccessStatusCode)
+            {
+                var total = await response.Content.ReadFromJsonAsync<double>();
+                txtTotal = total.ToString();
+            }
+            else
+            {
+                Console.WriteLine("Total Calculation Failed.");
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnRCalculate_Click()
+    {
+        try
+        {
+            var request = new RemainingRequest
+            {
+                Total = double.Parse(txtTotal),
+                Advance = double.Parse(txtAdv)
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Reservation/calculate-remaining", request);
+            if (response.IsSuccessStatusCode)
+            {
+                var remaining = await response.Content.ReadFromJsonAsync<double>();
+                txtRemaining = remaining.ToString();
+            }
+            else
+            {
+                Console.WriteLine("Remaining Calculation Failed.");
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtRId = "";
+        dtpCheckIn = "";
+        dtpCheckOut = "";
+        txtDay = "";
+        txtFId = "";
+        txtSId = "";
+        txtCName = "";
+        txtAdd = "";
+        txtPhone = "";
+        txtNID = "";
+        txtTotal = "";
+        txtAdv = "";
+        txtRemaining = "";
+        txtAutoSearch = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

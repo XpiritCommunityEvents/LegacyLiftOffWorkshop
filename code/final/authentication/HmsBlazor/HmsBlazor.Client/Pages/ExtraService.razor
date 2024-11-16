@@ -1,0 +1,191 @@
+@page "/extra-service"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+@attribute [Authorize]
+
+<PageTitle>Extra Service</PageTitle>
+
+<h3>Extra Service</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnSave_Click" class="btn btn-success">Save</button>
+    <button @onclick="btnDelete_Click" class="btn btn-danger">Delete</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Service Id:</label>
+        <input @bind="txtSId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Name:</label>
+        <input @bind="txtSName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Cost:</label>
+        <input @bind="txtSCost" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>SId</th>
+                <th>SName</th>
+                <th>SPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr @ondblclick="() => dgvService_DoubleClick(service)">
+                    <td>@service.SId</td>
+                    <td>@service.SName</td>
+                    <td>@service.SPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<ServicePackage> services = new List<ServicePackage>();
+    private string txtSId, txtSName, txtSCost;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+        await AutoIdGenerate();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            services = await Http.GetFromJsonAsync<List<ServicePackage>>("api/ServicePackage");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task AutoIdGenerate()
+    {
+        try
+        {
+            var lastService = services.OrderByDescending(s => s.SId).FirstOrDefault();
+            txtSId = (lastService != null ? lastService.SId + 1 : 1).ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnSave_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtSId) || string.IsNullOrEmpty(txtSName) || string.IsNullOrEmpty(txtSCost))
+            {
+                Console.WriteLine("To add Service please fill all the information.");
+                return;
+            }
+
+            var servicePackage = new ServicePackage
+            {
+                SId = int.Parse(txtSId),
+                SName = txtSName,
+                SPackageCost = double.Parse(txtSCost)
+            };
+
+            var existingService = await Http.GetFromJsonAsync<ServicePackage>($"api/ServicePackage/{txtSId}");
+            if (existingService != null)
+            {
+                // Update
+                var response = await Http.PutAsJsonAsync($"api/ServicePackage/{txtSId}", servicePackage);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Service Package Updated Successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Upgradation Failed.");
+                }
+            }
+            else
+            {
+                // Insert
+                var response = await Http.PostAsJsonAsync("api/ServicePackage", servicePackage);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Service Package Inserted.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Insertion Failed.");
+                }
+            }
+            await PopulateGridView();
+            ClearContent();
+            await AutoIdGenerate();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnDelete_Click()
+    {
+        try
+        {
+            var id = services.FirstOrDefault(s => s.SId.ToString() == txtSId)?.SId;
+            if (id != null)
+            {
+                var response = await Http.DeleteAsync($"api/ServicePackage/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Service Package {id} has been deleted.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Deletion Failed.");
+                }
+                await PopulateGridView();
+                ClearContent();
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvService_DoubleClick(ServicePackage service)
+    {
+        txtSId = service.SId.ToString();
+        txtSName = service.SName;
+        txtSCost = service.SPackageCost.ToString();
+    }
+
+    private void ClearContent()
+    {
+        txtSName = "";
+        txtSCost = "";
+        AutoIdGenerate();
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
