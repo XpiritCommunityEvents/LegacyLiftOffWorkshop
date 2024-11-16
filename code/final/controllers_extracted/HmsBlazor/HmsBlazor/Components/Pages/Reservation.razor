@@ -1,0 +1,388 @@
+@page "/reservation"
+@using System.Data
+
+@inject NavigationManager Navigation
+@inject Project_HMS.DataAccess Da
+@rendermode InteractiveServer
+
+<PageTitle>Reservation</PageTitle>
+
+<h3>Reservation</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnConfirm_Click" class="btn btn-success">Confirm</button>
+    <button @onclick="btnTCalculate_Click" class="btn btn-primary">Calculate Total</button>
+    <button @onclick="btnRCalculate_Click" class="btn btn-primary">Calculate Remaining</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Booking Id:</label>
+        <input @bind="txtBId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Room Id:</label>
+        <input @bind="txtRId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check In:</label>
+        <input @bind="dtpCheckIn" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check Out:</label>
+        <input @bind="dtpCheckOut" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Days:</label>
+        <input @bind="txtDay" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Id:</label>
+        <input @bind="txtFId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Id:</label>
+        <input @bind="txtSId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Address:</label>
+        <input @bind="txtAdd" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>NID:</label>
+        <input @bind="txtNID" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Total:</label>
+        <input @bind="txtTotal" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Advance:</label>
+        <input @bind="txtAdv" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Remaining:</label>
+        <input @bind="txtRemaining" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Search:</label>
+        <input @bind="txtAutoSearch" @oninput="textBox1_TextChanged" />
+    </div>
+</div>
+
+<div>
+    <h4>Rooms</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>RId</th>
+                <th>Category</th>
+                <th>RoomCost</th>
+                <th>IsBooked</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var room in rooms)
+            {
+                <tr>
+                    <td>@room.RId</td>
+                    <td>@room.Category</td>
+                    <td>@room.RoomCost</td>
+                    <td>@room.IsBooked</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h4>Food Packages</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>FId</th>
+                <th>FName</th>
+                <th>FPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var food in foods)
+            {
+                <tr>
+                    <td>@food.FId</td>
+                    <td>@food.FName</td>
+                    <td>@food.FPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h4>Service Packages</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>SId</th>
+                <th>SName</th>
+                <th>SPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr>
+                    <td>@service.SId</td>
+                    <td>@service.SName</td>
+                    <td>@service.SPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Room> rooms = new List<Room>();
+    private List<FoodPackage> foods = new List<FoodPackage>();
+    private List<ServicePackage> services = new List<ServicePackage>();
+    private string txtBId, txtRId, dtpCheckIn, dtpCheckOut, txtDay, txtFId, txtSId, txtCName, txtAdd, txtPhone, txtNID, txtTotal, txtAdv, txtRemaining, txtAutoSearch;
+
+    protected override void OnInitialized()
+    {
+        PopulateGridView();
+        AutoIdGenerate();
+    }
+
+    private void PopulateGridView()
+    {
+        PopulateGridView("select * from Room");
+    }
+
+    private void PopulateGridView(string sql)
+    {
+        try
+        {
+        
+            DataSet ds1 = Da.ExecuteQuery(sql);
+            rooms = ds1.Tables[0].AsEnumerable().Select(dataRow => new Room
+                {
+                    RId = dataRow.Field<int>("RId").ToString(),
+                    Category = dataRow.Field<string>("Category"),
+                    RoomCost = dataRow.Field<double>("RoomCost").ToString(),
+                    IsBooked = dataRow.Field<string>("IsBooked")
+                }).ToList();
+
+            string fdsql = "select * from FoodPackage;";
+            DataSet ds2 = Da.ExecuteQuery(fdsql);
+            foods = ds2.Tables[0].AsEnumerable().Select(dataRow => new FoodPackage
+                {
+                    FId = dataRow.Field<int>("FId").ToString(),
+                    FName = dataRow.Field<string>("FName"),
+                    FPackageCost = dataRow.Field<double>("FPackageCost").ToString()
+                }).ToList();
+
+            string svsql = "select * from ServicePackage;";
+            DataSet ds3 = Da.ExecuteQuery(svsql);
+            services = ds3.Tables[0].AsEnumerable().Select(dataRow => new ServicePackage
+                {
+                    SId = dataRow.Field<int>("SId").ToString(),
+                    SName = dataRow.Field<string>("SName"),
+                    SPackageCost = dataRow.Field<double>("SPackageCost").ToString()
+                }).ToList();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void textBox1_TextChanged(ChangeEventArgs e)
+    {
+        string sql = $"select * from Room where Category like '{txtAutoSearch}%';";
+        PopulateGridView(sql);
+    }
+
+    private void AutoIdGenerate()
+    {
+        try
+        {
+            string sql1 = "select BId from Booking order by BId desc;";
+            DataTable dt1 = Da.ExecuteQueryTable(sql1);
+            if (dt1.Rows.Count > 0)
+            {
+                string I = dt1.Rows[0]["BId"].ToString();
+                var ID = Convert.ToDouble(I);
+                txtBId = (ID + 1).ToString();
+            }
+            else
+            {
+                txtBId = "1";
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnConfirm_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtBId) || string.IsNullOrEmpty(txtRId) || string.IsNullOrEmpty(dtpCheckIn) ||
+                string.IsNullOrEmpty(dtpCheckOut) || string.IsNullOrEmpty(txtDay) || string.IsNullOrEmpty(txtFId) ||
+                string.IsNullOrEmpty(txtSId) || string.IsNullOrEmpty(txtCName) || string.IsNullOrEmpty(txtAdd) ||
+                string.IsNullOrEmpty(txtPhone) || string.IsNullOrEmpty(txtNID) || string.IsNullOrEmpty(txtTotal) ||
+                string.IsNullOrEmpty(txtAdv) || string.IsNullOrEmpty(txtRemaining))
+            {
+                Console.WriteLine("For reservation please fill all the information.");
+                return;
+            }
+
+            string query = $"insert into Booking values ({txtBId}, {txtRId}, '{dtpCheckIn}', '{dtpCheckOut}', {txtFId}, {txtSId}, '{txtCName}', '{txtAdd}', '{txtPhone}', '{txtNID}', {txtTotal}, {txtAdv}, {txtRemaining});";
+            int count = Da.ExecuteDML(query);
+            if (count == 1)
+            {
+                Console.WriteLine("Data Inserted In Booking Table.");
+                try
+                {
+                    // Update In Room Table
+                    string update = $"UPDATE Room SET IsBooked = 'Yes', BId = {txtBId} WHERE RId = {txtRId};";
+                    int count1 = Da.ExecuteDML(update);
+                    if (count1 == 1)
+                    {
+                        Console.WriteLine("Data Updated In Room Table Successfully.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Data Upgradation Failed In Room Table.");
+                    }
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine("Error: " + exc.Message);
+                }
+                ClearContent();
+                AutoIdGenerate();
+                PopulateGridView();
+            }
+            else
+            {
+                Console.WriteLine("Data Insertion Failed In Booking Table.");
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnTCalculate_Click()
+    {
+        try
+        {
+            double total = 0;
+            var D = Convert.ToDouble(txtDay);
+
+            // Room Cost
+            string sql1 = $"select RoomCost from room where RId = {txtRId};";
+            DataTable dt1 = Da.ExecuteQueryTable(sql1);
+            string RoomCost = dt1.Rows[0]["RoomCost"].ToString();
+            var RCost = Convert.ToDouble(RoomCost);
+            total += RCost * D;
+
+            // Food Cost
+            string sql2 = $"select FPackageCost from FoodPackage where FId = {txtFId};";
+            DataTable dt2 = Da.ExecuteQueryTable(sql2);
+            string FoodCost = dt2.Rows[0]["FPackageCost"].ToString();
+            var FCost = Convert.ToDouble(FoodCost);
+            total += FCost * D;
+
+            // Service Cost
+            string sql3 = $"select SPackageCost from ServicePackage where SId = {txtSId};";
+            DataTable dt3 = Da.ExecuteQueryTable(sql3);
+            string ServiceCost = dt3.Rows[0]["SPackageCost"].ToString();
+            var SCost = Convert.ToDouble(ServiceCost);
+            total += SCost;
+
+            // Total
+            txtTotal = total.ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnRCalculate_Click()
+    {
+        try
+        {
+            double remain = 0;
+            var T = Convert.ToDouble(txtTotal);
+            var A = Convert.ToDouble(txtAdv);
+            remain = T - A;
+            txtRemaining = remain.ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtRId = "";
+        dtpCheckIn = "";
+        dtpCheckOut = "";
+        txtDay = "";
+        txtFId = "";
+        txtSId = "";
+        txtCName = "";
+        txtAdd = "";
+        txtPhone = "";
+        txtNID = "";
+        txtTotal = "";
+        txtAdv = "";
+        txtRemaining = "";
+        txtAutoSearch = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class Room
+    {
+        public string RId { get; set; }
+        public string Category { get; set; }
+        public string RoomCost { get; set; }
+        public string IsBooked { get; set; }
+    }
+
+    public class FoodPackage
+    {
+        public string FId { get; set; }
+        public string FName { get; set; }
+        public string FPackageCost { get; set; }
+    }
+
+    public class ServicePackage
+    {
+        public string SId { get; set; }
+        public string SName { get; set; }
+        public string SPackageCost { get; set; }
+    }
+}

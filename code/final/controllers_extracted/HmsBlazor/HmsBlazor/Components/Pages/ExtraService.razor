@@ -1,0 +1,210 @@
+@page "/extra-service"
+@using System.Data
+@inject NavigationManager Navigation
+@inject Project_HMS.DataAccess Da
+@rendermode InteractiveServer
+
+<PageTitle>Extra Service</PageTitle>
+
+<h3>Extra Service</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnSave_Click" class="btn btn-success">Save</button>
+    <button @onclick="btnDelete_Click" class="btn btn-danger">Delete</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Service Id:</label>
+        <input @bind="txtSId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Name:</label>
+        <input @bind="txtSName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Service Cost:</label>
+        <input @bind="txtSCost" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>SId</th>
+                <th>SName</th>
+                <th>SPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in services)
+            {
+                <tr @ondblclick="() => dgvService_DoubleClick(service)">
+                    <td>@service.SId</td>
+                    <td>@service.SName</td>
+                    <td>@service.SPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<ServicePackage> services = new List<ServicePackage>();
+    private string txtSId, txtSName, txtSCost;
+
+    protected override void OnInitialized()
+    {
+        PopulateGridView();
+        AutoIdGenerate();
+    }
+
+    private void PopulateGridView()
+    {
+        try
+        {
+            string sql = "select * from ServicePackage;";
+            DataSet ds1 = Da.ExecuteQuery(sql);
+            services = ds1.Tables[0].AsEnumerable().Select(dataRow => new ServicePackage
+                {
+                    SId = dataRow.Field<int>("SId").ToString(),
+                    SName = dataRow.Field<string>("SName"),
+                    SPackageCost = dataRow.Field<double>("SPackageCost").ToString()
+                }).ToList();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void AutoIdGenerate()
+    {
+        try
+        {
+            string sql1 = "select SId from ServicePackage order by SId desc;";
+            DataTable dt1 = Da.ExecuteQueryTable(sql1);
+            if (dt1.Rows.Count > 0)
+            {
+                string I = dt1.Rows[0]["SId"].ToString();
+                var ID = Convert.ToDouble(I);
+                txtSId = (ID + 1).ToString();
+            }
+            else
+            {
+                txtSId = "1";
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnSave_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtSId) || string.IsNullOrEmpty(txtSName) || string.IsNullOrEmpty(txtSCost))
+            {
+                Console.WriteLine("To add Service please fill all the information.");
+                return;
+            }
+
+            var sql = $"select * from ServicePackage where SId = {txtSId};";
+            var ds = Da.ExecuteQuery(sql);
+            if (ds.Tables[0].Rows.Count == 1)
+            {
+                // Update
+                string query = $"update ServicePackage set SName = '{txtSName}', SPackageCost = {txtSCost} where SId = {txtSId};";
+                int count = Da.ExecuteDML(query);
+                if (count == 1)
+                {
+                    Console.WriteLine("Service Package Updated Successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Upgradation Failed.");
+                }
+            }
+            else
+            {
+                // Insert
+                string query = $"insert into ServicePackage values ({txtSId}, '{txtSName}', {txtSCost});";
+                int count = Da.ExecuteDML(query);
+                if (count == 1)
+                {
+                    Console.WriteLine("Service Package Inserted.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Insertion Failed.");
+                }
+            }
+            PopulateGridView();
+            ClearContent();
+            AutoIdGenerate();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnDelete_Click()
+    {
+        try
+        {
+            var id = services.FirstOrDefault(s => s.SId == txtSId)?.SId;
+            if (id != null)
+            {
+                string sql = $"delete from ServicePackage where SId = '{id}';";
+                int count = Da.ExecuteDML(sql);
+                if (count == 1)
+                {
+                    Console.WriteLine($"Service Package {id} has been deleted.");
+                }
+                else
+                {
+                    Console.WriteLine("Service Package Deletion Failed.");
+                }
+                PopulateGridView();
+                ClearContent();
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvService_DoubleClick(ServicePackage service)
+    {
+        txtSId = service.SId;
+        txtSName = service.SName;
+        txtSCost = service.SPackageCost;
+    }
+
+    private void ClearContent()
+    {
+        txtSName = "";
+        txtSCost = "";
+        AutoIdGenerate();
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    public class ServicePackage
+    {
+        public string SId { get; set; }
+        public string SName { get; set; }
+        public string SPackageCost { get; set; }
+    }
+}

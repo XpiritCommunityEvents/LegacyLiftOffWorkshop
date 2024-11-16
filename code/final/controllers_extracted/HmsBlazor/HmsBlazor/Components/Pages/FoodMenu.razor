@@ -1,0 +1,210 @@
+@page "/food-menu"
+@using System.Data
+@inject NavigationManager Navigation
+@inject Project_HMS.DataAccess Da
+@rendermode InteractiveServer
+
+<PageTitle>Food Menu</PageTitle>
+
+<h3>Food Menu</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnSave_Click" class="btn btn-success">Save</button>
+    <button @onclick="btnDelete_Click" class="btn btn-danger">Delete</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Food Id:</label>
+        <input @bind="txtFId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Name:</label>
+        <input @bind="txtFName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Cost:</label>
+        <input @bind="txtFCost" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>FId</th>
+                <th>FName</th>
+                <th>FPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var food in foods)
+            {
+                <tr @ondblclick="() => dgvFood_DoubleClick(food)">
+                    <td>@food.FId</td>
+                    <td>@food.FName</td>
+                    <td>@food.FPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<FoodPackage> foods = new List<FoodPackage>();
+    private string txtFId, txtFName, txtFCost;
+
+    protected override void OnInitialized()
+    {
+        PopulateGridView();
+        AutoIdGenerate();
+    }
+
+    private void PopulateGridView()
+    {
+        try
+        {
+            string sql = "select * from FoodPackage;";
+            DataSet ds1 = Da.ExecuteQuery(sql);
+            foods = ds1.Tables[0].AsEnumerable().Select(dataRow => new FoodPackage
+                {
+                    FId = dataRow.Field<int>("FId").ToString(),
+                    FName = dataRow.Field<string>("FName"),
+                    FPackageCost = dataRow.Field<double>("FPackageCost").ToString()
+                }).ToList();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void AutoIdGenerate()
+    {
+        try
+        {
+            string sql1 = "select FId from FoodPackage order by FId desc;";
+            DataTable dt1 = Da.ExecuteQueryTable(sql1);
+            if (dt1.Rows.Count > 0)
+            {
+                string I = dt1.Rows[0]["FId"].ToString();
+                var ID = Convert.ToDouble(I);
+                txtFId = (ID + 1).ToString();
+            }
+            else
+            {
+                txtFId = "1";
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnSave_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtFId) || string.IsNullOrEmpty(txtFName) || string.IsNullOrEmpty(txtFCost))
+            {
+                Console.WriteLine("To add Food please fill all the information.");
+                return;
+            }
+
+            var sql = $"select * from FoodPackage where FId = {txtFId};";
+            var ds = Da.ExecuteQuery(sql);
+            if (ds.Tables[0].Rows.Count == 1)
+            {
+                // Update
+                string query = $"update FoodPackage set FName = '{txtFName}', FPackageCost = {txtFCost} where FId = {txtFId};";
+                int count = Da.ExecuteDML(query);
+                if (count == 1)
+                {
+                    Console.WriteLine("Food Package Updated Successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Upgradation Failed.");
+                }
+            }
+            else
+            {
+                // Insert
+                string query = $"insert into FoodPackage values ({txtFId}, '{txtFName}', {txtFCost});";
+                int count = Da.ExecuteDML(query);
+                if (count == 1)
+                {
+                    Console.WriteLine("Food Package Inserted.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Insertion Failed.");
+                }
+            }
+            PopulateGridView();
+            ClearContent();
+            AutoIdGenerate();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnDelete_Click()
+    {
+        try
+        {
+            var id = foods.FirstOrDefault(f => f.FId == txtFId)?.FId;
+            if (id != null)
+            {
+                string sql = $"delete from FoodPackage where FId = '{id}';";
+                int count = Da.ExecuteDML(sql);
+                if (count == 1)
+                {
+                    Console.WriteLine($"Food Package {id} has been deleted.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Deletion Failed.");
+                }
+                PopulateGridView();
+                ClearContent();
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvFood_DoubleClick(FoodPackage food)
+    {
+        txtFId = food.FId;
+        txtFName = food.FName;
+        txtFCost = food.FPackageCost;
+    }
+
+    private void ClearContent()
+    {
+        txtFName = "";
+        txtFCost = "";
+        AutoIdGenerate();
+    }
+
+    private void btnBack_Click()
+    {
+        // Implement navigation logic here
+    }
+
+    public class FoodPackage
+    {
+        public string FId { get; set; }
+        public string FName { get; set; }
+        public string FPackageCost { get; set; }
+    }
+}
