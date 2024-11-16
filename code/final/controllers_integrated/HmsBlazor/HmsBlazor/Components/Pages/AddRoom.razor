@@ -1,0 +1,201 @@
+@page "/add-room"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Add Room</PageTitle>
+
+<h3>Add Room</h3>
+
+<div class="form-group">
+    <label>Room ID:</label>
+    <input @bind="txtRId" disabled class="form-control" />
+</div>
+<div class="form-group">
+    <label for="category">Category:</label>
+    <input id="category" @bind="txtCategory" class="form-control" />
+</div>
+<div class="form-group">
+    <label>Is Booked:</label>
+    <input @bind="txtIsBooked" class="form-control" />
+</div>
+<div>
+    <label>Room Cost:</label>
+    <input @bind="txtRCost" class="form-control" />
+</div>
+<div class="button-group">
+    <button @onclick="btnSave_Click" class="btn btn-success">Save</button>
+    <button @onclick="btnClear_Click" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnDelete_Click" class="btn btn-danger">Delete</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Room ID</th>
+            <th>Category</th>
+            <th>Is Booked</th>
+            <th>Room Cost</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var room in rooms)
+        {
+            <tr @ondblclick="() => dgvRoom_DoubleClick(room)">
+                <td>@room.RId</td>
+                <td>@room.Category</td>
+                <td>@room.IsBooked</td>
+                <td>@room.RoomCost</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string txtRId;
+    private string txtCategory;
+    private string txtIsBooked;
+    private string txtRCost;
+    private List<Room> rooms = new List<Room>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+        await AutoIdGenerate();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            rooms = await Http.GetFromJsonAsync<List<Room>>("api/Room");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task AutoIdGenerate()
+    {
+        try
+        {
+            var lastRoom = rooms.OrderByDescending(r => r.RId).FirstOrDefault();
+            txtRId = (lastRoom?.RId + 1).ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvRoom_DoubleClick(Room room)
+    {
+        txtRId = room.RId.ToString();
+        txtCategory = room.Category;
+        txtIsBooked = room.IsBooked;
+        txtRCost = room.RoomCost.ToString();
+    }
+
+    private void ClearContent()
+    {
+        txtCategory = "";
+        txtIsBooked = "";
+        txtRCost = "";
+    }
+
+    private async Task btnSave_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtRId) || string.IsNullOrEmpty(txtCategory) || string.IsNullOrEmpty(txtIsBooked) || string.IsNullOrEmpty(txtRCost))
+            {
+                Console.WriteLine("To add Room please fill all the information.");
+                return;
+            }
+
+            var room = new Room
+            {
+                RId = int.Parse(txtRId),
+                Category = txtCategory,
+                IsBooked = txtIsBooked,
+                RoomCost = double.Parse(txtRCost)
+            };
+
+            var existingRoom = await Http.GetFromJsonAsync<Room>($"api/Room/{room.RId}");
+            if (existingRoom != null)
+            {
+                // Update
+                var response = await Http.PutAsJsonAsync($"api/Room/{room.RId}", room);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Room Updated Successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Room Upgradation Failed.");
+                }
+            }
+            else
+            {
+                // Insert
+                var response = await Http.PostAsJsonAsync("api/Room", room);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Room Inserted.");
+                }
+                else
+                {
+                    Console.WriteLine("Room Insertion Failed.");
+                }
+            }
+
+            await PopulateGridView();
+            ClearContent();
+            await AutoIdGenerate();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnClear_Click()
+    {
+        ClearContent();
+    }
+
+    private async Task btnDelete_Click()
+    {
+        try
+        {
+            var id = rooms.FirstOrDefault(r => r.RId.ToString() == txtRId)?.RId;
+            if (id != null)
+            {
+                var response = await Http.DeleteAsync($"api/Room/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Room {id} has been deleted.");
+                }
+                else
+                {
+                    Console.WriteLine("Room Deletion Failed.");
+                }
+
+                await PopulateGridView();
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

@@ -1,0 +1,36 @@
+<!-- Login.razor -->
+@page "/Login"
+@rendermode InteractiveServer
+<div class="login-container">
+    <div class="login-box">
+        <h3 class="login-title">Login Info</h3>
+        <div class="form-group">
+            <label for="userId">User ID:</label>
+            <input id="userId" @bind="UserId" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input id="password" @bind="Password" type="password" class="form-control" />
+        </div>
+        <div class="button-group">
+            <button @onclick="LoginUser" class="btn btn-success">Login</button>
+            <button @onclick="Clear" class="btn btn-secondary">Clear</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string UserId { get; set; }
+    private string Password { get; set; }
+
+    private void LoginUser()
+    {
+        // Login logic here
+    }
+
+    private void Clear()
+    {
+        UserId = string.Empty;
+        Password = string.Empty;
+    }
+}

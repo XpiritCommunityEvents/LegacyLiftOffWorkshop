@@ -1,0 +1,200 @@
+@page "/bill-history"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Bill History</PageTitle>
+
+<h3>Bill History</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnCalculate_Click" class="btn btn-success">Calculate</button>
+    <button @onclick="btnPrint_Click" class="btn btn-secondary">Print</button>
+    <button @onclick="btnUpdate_Click" class="btn btn-success">Update</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Bill Id:</label>
+        <input @bind="txtBId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Room Id:</label>
+        <input @bind="txtRId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone No:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check In:</label>
+        <input @bind="dtpCheckIn" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Check Out:</label>
+        <input @bind="dtpCheckOut" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Total:</label>
+        <input @bind="txtTotal" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Advance:</label>
+        <input @bind="txtAdvance" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Remaining:</label>
+        <input @bind="txtRemaining" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Now Paid Amount:</label>
+        <input @bind="txtNPaid" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Returned Amount:</label>
+        <input @bind="txtReturn" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>BId</th>
+                <th>RId</th>
+                <th>CName</th>
+                <th>CPhone</th>
+                <th>CheckIn</th>
+                <th>CheckOut</th>
+                <th>Advance</th>
+                <th>Remaining</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in bookings)
+            {
+                <tr @ondblclick="() => dgvBooking_DoubleClick(booking)">
+                    <td>@booking.BId</td>
+                    <td>@booking.RId</td>
+                    <td>@booking.CName</td>
+                    <td>@booking.CPhone</td>
+                    <td>@booking.CheckIn</td>
+                    <td>@booking.CheckOut</td>
+                    <td>@booking.Advance</td>
+                    <td>@booking.Remaining</td>
+                    <td>@booking.Total</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Booking> bookings = new List<Booking>();
+    private string txtBId, txtRId, txtCName, txtPhone, txtTotal, txtAdvance, txtRemaining, txtNPaid, txtReturn;
+    private string dtpCheckIn, dtpCheckOut;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            bookings = await Http.GetFromJsonAsync<List<Booking>>("api/BillHistory/bookings");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvBooking_DoubleClick(Booking booking)
+    {
+        txtBId = booking.BId.ToString();
+        txtRId = booking.RId.ToString();
+        txtCName = booking.CName;
+        txtPhone = booking.CPhone;
+        dtpCheckIn = booking.CheckIn;
+        dtpCheckOut = booking.CheckOut;
+        txtAdvance = booking.Advance.ToString();
+        txtRemaining = booking.Remaining.ToString();
+        txtTotal = booking.Total.ToString();
+    }
+
+    private void btnCalculate_Click()
+    {
+        try
+        {
+            double rv = 0;
+            var R = Convert.ToDouble(txtRemaining);
+            var N = Convert.ToDouble(txtNPaid);
+            rv = N - R;
+            txtReturn = rv.ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void btnPrint_Click()
+    {
+        // Implement print logic here
+    }
+
+    private async Task btnUpdate_Click()
+    {
+        try
+        {
+            var bId = int.Parse(txtBId);
+            var rId = int.Parse(txtRId);
+            var total = double.Parse(txtTotal);
+
+            var response = await Http.PostAsJsonAsync($"api/BillHistory/update-booking?bId={bId}&rId={rId}&total={total}", new { });
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Data Updated Successfully.");
+                await PopulateGridView();
+            }
+            else
+            {
+                Console.WriteLine("Data Upgradation Failed.");
+            }
+            ClearContent();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtBId = "";
+        txtRId = "";
+        dtpCheckIn = "";
+        txtCName = "";
+        txtPhone = "";
+        txtTotal = "";
+        txtAdvance = "";
+        txtRemaining = "";
+        txtNPaid = "";
+        txtReturn = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

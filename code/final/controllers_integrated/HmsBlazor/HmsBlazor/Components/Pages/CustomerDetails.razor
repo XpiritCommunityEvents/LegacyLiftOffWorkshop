@@ -1,0 +1,139 @@
+@page "/customer-details"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Customer Details</PageTitle>
+
+<h3>Customer Details</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnUpdate_Click" class="btn btn-success">Update</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Customer Name:</label>
+        <input @bind="txtCName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Phone No:</label>
+        <input @bind="txtPhone" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Address:</label>
+        <input @bind="txtAdd" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>NID:</label>
+        <input @bind="txtNID" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>CName</th>
+                <th>CPhone</th>
+                <th>CAdd</th>
+                <th>CNID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customers)
+            {
+                <tr @ondblclick="() => dgvCustomer_DoubleClick(customer)">
+                    <td>@customer.CName</td>
+                    <td>@customer.CPhone</td>
+                    <td>@customer.CAdd</td>
+                    <td>@customer.CNID</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<Customer> customers = new List<Customer>();
+    private string txtCName, txtPhone, txtAdd, txtNID;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            customers = await Http.GetFromJsonAsync<List<Customer>>("api/Customer");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvCustomer_DoubleClick(Customer customer)
+    {
+        txtCName = customer.CName;
+        txtPhone = customer.CPhone;
+        txtAdd = customer.CAdd;
+        txtNID = customer.CNID;
+    }
+
+    private async Task btnUpdate_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtCName) || string.IsNullOrEmpty(txtAdd) || string.IsNullOrEmpty(txtNID) || string.IsNullOrEmpty(txtPhone))
+            {
+                Console.WriteLine("To Update please fill all the information.");
+                return;
+            }
+
+            var customer = new Customer
+            {
+                CName = txtCName,
+                CPhone = txtPhone,
+                CAdd = txtAdd,
+                CNID = txtNID
+            };
+
+            var response = await Http.PutAsJsonAsync($"api/Customer/{txtNID}", customer);
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Customer Info Updated Successfully.");
+                await PopulateGridView();
+            }
+            else
+            {
+                Console.WriteLine("Customer Upgradation Failed.");
+            }
+            ClearContent();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void ClearContent()
+    {
+        txtCName = "";
+        txtPhone = "";
+        txtAdd = "";
+        txtNID = "";
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

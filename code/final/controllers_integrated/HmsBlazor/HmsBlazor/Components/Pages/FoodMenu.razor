@@ -1,0 +1,190 @@
+@page "/food-menu"
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Food Menu</PageTitle>
+
+<h3>Food Menu</h3>
+
+<div class="button-group">
+    <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
+    <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
+    <button @onclick="btnSave_Click" class="btn btn-success">Save</button>
+    <button @onclick="btnDelete_Click" class="btn btn-danger">Delete</button>
+    <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+</div>
+
+<div>
+    <div class="form-group">
+        <label>Food Id:</label>
+        <input @bind="txtFId" readonly class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Name:</label>
+        <input @bind="txtFName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Food Cost:</label>
+        <input @bind="txtFCost" class="form-control" />
+    </div>
+</div>
+
+<div>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>FId</th>
+                <th>FName</th>
+                <th>FPackageCost</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var food in foods)
+            {
+                <tr @ondblclick="() => dgvFood_DoubleClick(food)">
+                    <td>@food.FId</td>
+                    <td>@food.FName</td>
+                    <td>@food.FPackageCost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<FoodPackage> foods = new List<FoodPackage>();
+    private string txtFId, txtFName, txtFCost;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PopulateGridView();
+        await AutoIdGenerate();
+    }
+
+    private async Task PopulateGridView()
+    {
+        try
+        {
+            foods = await Http.GetFromJsonAsync<List<FoodPackage>>("api/FoodMenu");
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task AutoIdGenerate()
+    {
+        try
+        {
+            var lastFood = foods.OrderByDescending(f => int.Parse(f.FId)).FirstOrDefault();
+            txtFId = (lastFood != null ? int.Parse(lastFood.FId) + 1 : 1).ToString();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnSave_Click()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(txtFId) || string.IsNullOrEmpty(txtFName) || string.IsNullOrEmpty(txtFCost))
+            {
+                Console.WriteLine("To add Food please fill all the information.");
+                return;
+            }
+
+            var foodPackage = new FoodPackage
+            {
+                FId = txtFId,
+                FName = txtFName,
+                FPackageCost = txtFCost
+            };
+
+            var existingFood = await Http.GetFromJsonAsync<FoodPackage>($"api/FoodMenu/{txtFId}");
+            if (existingFood != null)
+            {
+                // Update
+                var response = await Http.PutAsJsonAsync($"api/FoodMenu/{txtFId}", foodPackage);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Food Package Updated Successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Upgradation Failed.");
+                }
+            }
+            else
+            {
+                // Insert
+                var response = await Http.PostAsJsonAsync("api/FoodMenu", foodPackage);
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Food Package Inserted.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Insertion Failed.");
+                }
+            }
+            await PopulateGridView();
+            ClearContent();
+            await AutoIdGenerate();
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private async Task btnDelete_Click()
+    {
+        try
+        {
+            var id = foods.FirstOrDefault(f => f.FId == txtFId)?.FId;
+            if (id != null)
+            {
+                var response = await Http.DeleteAsync($"api/FoodMenu/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Food Package {id} has been deleted.");
+                }
+                else
+                {
+                    Console.WriteLine("Food Package Deletion Failed.");
+                }
+                await PopulateGridView();
+                ClearContent();
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.WriteLine("Error: " + exc.Message);
+        }
+    }
+
+    private void dgvFood_DoubleClick(FoodPackage food)
+    {
+        txtFId = food.FId;
+        txtFName = food.FName;
+        txtFCost = food.FPackageCost;
+    }
+
+    private void ClearContent()
+    {
+        txtFName = "";
+        txtFCost = "";
+        AutoIdGenerate();
+    }
+
+    private void btnBack_Click()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
