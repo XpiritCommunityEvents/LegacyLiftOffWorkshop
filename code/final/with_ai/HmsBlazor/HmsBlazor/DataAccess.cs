@@ -38,9 +38,10 @@ namespace Project_HMS
             set { this.ds = value; }
         }
 
-        public DataAccess()
+        public DataAccess(IConfiguration configuration)
         {
-            this.Sqlcon = new SqlConnection(@"Data Source=localhost;Initial Catalog=Project_HMS;Persist Security Info=True;User ID=sa;Password=myPassword123!@;TrustServerCertificate=True");
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            this.Sqlcon = new SqlConnection(connectionString);
             this.Sqlcon.Open();
         }
 

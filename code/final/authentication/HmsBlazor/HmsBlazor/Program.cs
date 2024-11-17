@@ -33,7 +33,6 @@ builder.Services
         .EnableTokenAcquisitionToCallDownstreamApi([ entraConfig.GetValue<string>("Scopes")! ])
         .AddInMemoryTokenCaches();
 
-
 builder.Services.AddAuthentication()
     .AddJwtBearer("Bearer", options =>
     {

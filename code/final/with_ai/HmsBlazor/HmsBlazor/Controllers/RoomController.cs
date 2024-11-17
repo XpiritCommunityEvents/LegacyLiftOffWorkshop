@@ -8,7 +8,7 @@ namespace Project_HMS.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-//[Authorize]
+[Authorize]
 public class RoomController(DataAccess dataAccess) : ControllerBase
 {
     [HttpGet]
