@@ -43,19 +43,6 @@ jobs:
           }
           return "${{ github.event.inputs.githubhandle }}";
 
-    - name: Check if user is attendee
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        # Get user id who triggered this workflow
-        
-        role=$(gh api repos/XpiritCommunityEvents/LegacyLiftOffWorkshop/collaborators/${{steps.github_handle.outputs.result}}/permission | jq '.role_name' -r)
-        echo "User has role $role"
-        if [[ "$role" != "Attendee" && "$role" != "admin" ]]; then
-            echo "User is not an attendee or admin. Stopping the workflow."
-            exit 1
-        fi
-
     - name: Get codespace name from issue title
       id: codespace_name
       if: success()
