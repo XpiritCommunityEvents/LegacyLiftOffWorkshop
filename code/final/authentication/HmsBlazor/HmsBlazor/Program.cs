@@ -1,10 +1,11 @@
-using HmsBlazor.Client.Pages;
 using HmsBlazor.Components;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,15 +22,34 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var entraConfig = builder.Configuration.GetSection("EntraID");
+
 builder.Services
-    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("EntraID"));
+    .AddAuthentication(options => {
+        options.DefaultAuthenticateScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
+    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("EntraID"))
+        .EnableTokenAcquisitionToCallDownstreamApi([ entraConfig.GetValue<string>("Scopes")! ])
+        .AddInMemoryTokenCaches();
+
+
+builder.Services.AddAuthentication()
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = entraConfig.GetValue<string>("Authority");
+        options.Audience = entraConfig.GetValue<string>("ClientId");
+    });
 
 builder.Services.AddControllersWithViews()
                 .AddMicrosoftIdentityUI();
                 
 builder.Services.AddAuthorization(options =>
 {
+     options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme)
+        .Build();
     options.FallbackPolicy = options.DefaultPolicy;
 });
 
@@ -37,7 +57,8 @@ var baseAddress = builder.Configuration.GetValue<string>("BaseUrl");
 
 // enables HttpClientFactory.CreateClient()
 builder.Services.AddHttpClient("HmsApi", 
-    client => client.BaseAddress = new Uri(baseAddress));
+    client => client.BaseAddress = new Uri(baseAddress))
+     .AddMicrosoftIdentityAppAuthenticationHandler("HmsApi", entraConfig);
 
 // registers HttpClient so you can inject one in your components
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>()
@@ -73,7 +94,6 @@ forwardedHeadersOptions.KnownNetworks.Clear(); // Loopback by default, this clea
 forwardedHeadersOptions.KnownProxies.Clear(); // Loopback by default, this clears it
 
 app.UseForwardedHeaders(forwardedHeadersOptions);
-
 
 app.UseAuthentication(); // <-- add this
 app.UseAuthorization(); // <-- add this
