@@ -1,23 +1,25 @@
 @page "/reservation"
 @using System.Net.Http
 @using System.Net.Http.Json
+@using SmartComponents
 @inject HttpClient Http
 @inject NavigationManager Navigation
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveServer
 
 @attribute [Authorize]
 
 <PageTitle>Reservation</PageTitle>
 
 <h3>Reservation</h3>
-
-<div class="button-group">
+<form>
+    <div class="button-group">
     <button @onclick="PopulateGridView" class="btn btn-primary">Load Data</button>
     <button @onclick="ClearContent" class="btn btn-secondary">Clear</button>
     <button @onclick="btnConfirm_Click" class="btn btn-success">Confirm</button>
     <button @onclick="btnTCalculate_Click" class="btn btn-primary">Calculate Total</button>
     <button @onclick="btnRCalculate_Click" class="btn btn-primary">Calculate Remaining</button>
     <button @onclick="btnBack_Click" class="btn btn-secondary">Back</button>
+    <SmartPasteButton DefaultIcon on >Paste From Clipboard</SmartPasteButton>
 </div>
 
 <div>
@@ -31,19 +33,19 @@
     </div>
     <div class="form-group">
         <label>Check In:</label>
-        <input @bind="dtpCheckIn" class="form-control" />
+        <input @bind="dtpCheckIn" class="form-control" data-smartpaste-description="A date in the format of YYYY-MM-dd if you can't find the year assume current year 2024" />
     </div>
     <div class="form-group">
         <label>Check Out:</label>
-        <input @bind="dtpCheckOut" class="form-control" />
+        <input @bind="dtpCheckOut" class="form-control" data-smartpaste-description="A date in the format of YYYY-MM-dd if you can't find the year assume current year 2024" />
     </div>
     <div class="form-group">
         <label>Days:</label>
-        <input @bind="txtDay" class="form-control" />
+        <input @bind="txtDay" class="form-control" data-smartpaste-description="Number of days of the stay" />
     </div>
     <div class="form-group">
         <label>Food Id:</label>
-        <input @bind="txtFId" class="form-control" />
+        <input @bind="txtFId" class="form-control" data-smartpaste-description="Id of the food package. 0 if this can not be determined" />
     </div>
     <div class="form-group">
         <label>Service Id:</label>
@@ -51,15 +53,15 @@
     </div>
     <div class="form-group">
         <label>Customer Name:</label>
-        <input @bind="txtCName" class="form-control" />
+        <input @bind="txtCName" class="form-control" data-smartpaste-description="Customer name" />
     </div>
     <div class="form-group">
         <label>Address:</label>
-        <input @bind="txtAdd" class="form-control" />
+        <input @bind="txtAdd" class="form-control" data-smartpaste-description="Customer adress" />
     </div>
     <div class="form-group">
         <label>Phone:</label>
-        <input @bind="txtPhone" class="form-control" />
+        <input @bind="txtPhone" class="form-control" data-smartpaste-description="Customer phone number" />
     </div>
     <div class="form-group">
         <label>NID:</label>
@@ -71,7 +73,7 @@
     </div>
     <div class="form-group">
         <label>Advance:</label>
-        <input @bind="txtAdv" class="form-control" />
+        <input @bind="txtAdv" class="form-control" data-smartpaste-description="Amount paid in advance" />
     </div>
     <div class="form-group">
         <label>Remaining:</label>
@@ -82,7 +84,7 @@
         <input @bind="txtAutoSearch" @oninput="textBox1_TextChanged" />
     </div>
 </div>
-
+</form>
 <div>
     <h4>Rooms</h4>
     <table class="table table-hover">

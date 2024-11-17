@@ -6,7 +6,7 @@ namespace Project_HMS.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class ReservationController(DataAccess dataAccess) : ControllerBase
 {
     [HttpPost("confirm-reservation")]

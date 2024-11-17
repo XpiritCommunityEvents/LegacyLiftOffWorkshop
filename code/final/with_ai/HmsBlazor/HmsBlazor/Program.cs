@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Microsoft.AspNetCore.HttpOverrides;
+using SmartComponents.Inference.OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddMicrosoftIdentityConsentHandler()
     .AddInteractiveWebAssemblyComponents();
+
+builder.Services.AddSmartComponents()
+       .WithInferenceBackend<OpenAIInferenceBackend>(); ;
 
 builder.Services.AddScoped<Project_HMS.DataAccess>();
 
