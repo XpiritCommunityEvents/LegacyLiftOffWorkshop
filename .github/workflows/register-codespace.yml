@@ -7,9 +7,6 @@ on:
 
   workflow_dispatch:
     inputs: 
-      githubhandle: 
-        required: true
-        type: text 
       codespace:
         required: true
         type: text 
@@ -25,23 +22,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Get issue creator
-      id: github_handle
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          if ("${{ github.event_name }}" == "issues") {
-            const subject = context.payload.issue;
-            if (subject.labels.find(l => l.name == "provisioning")) {
-              creator = subject.user.login;
-              console.log(`Issue creator: ${creator}`);
-              return creator;
-            }
-            throw new Error("Issue did not have a provisioning label");
-          }
-          return "${{ github.event.inputs.githubhandle }}";
 
     - name: Get codespace name from issue title
       id: codespace_name
