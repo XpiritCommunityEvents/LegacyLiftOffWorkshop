@@ -30,3 +30,17 @@ for repo in $(gh repo list XpiritCommunityEvents --json name --jq '.[].name | se
     gh repo delete "XpiritCommunityEvents/$repo" --yes
 done
 ```
+Find all codespaces:
+
+```bash
+gh codespace list -o XpiritCommunityEvents --json name,repository > codespaces.json
+```
+
+Cleaning them op:
+
+```bash
+jq -r 'map(select(.repository | test("^XpiritCommunityEvents/attendeello")) | .repository)' codespaces.json | while read repo; do
+    echo "Deleting codespace for repository: $repo"
+    gh codespace delete --repo "$repo" --force
+done
+```
