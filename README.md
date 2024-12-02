@@ -19,3 +19,14 @@ You will start with the code base in the [code/start/legacy folder](./code/start
 You can clone this repo and start working on the labs which can be found on the [Wiki pages of this repository](https://github.com/XpiritCommunityEvents/LegacyLiftOffWorkshop/wiki). We recommend that you keep a tab open with the Wiki at all times during the lab.
 
 Have fun!
+
+### Cleanup
+
+To clean up all the attendee repos:
+
+```bash
+for repo in $(gh repo list XpiritCommunityEvents --json name --jq '.[].name | select(test("^attendeello"))'); do
+    echo "Deleting repository: $repo"
+    gh repo delete "XpiritCommunityEvents/$repo" --yes
+done
+```
